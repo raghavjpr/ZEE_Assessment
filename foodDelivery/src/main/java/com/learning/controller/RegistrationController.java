@@ -36,12 +36,20 @@ public class RegistrationController {
 
 	}
 
-//	@PostMapping("/authenticate")
-//	public ResponseEntity<?> validateRegistration()
+	@PostMapping("/authenticate")
+	public ResponseEntity<?> validateRegistration() {
+		return null;
+
+	}
 
 	@GetMapping("/users")
 	public ResponseEntity<?> getAllUserDetails() {
 		List<Registration> list = registrationService.getAllRegistrations();
+		if (list.isEmpty()) {
+			Map<String, String> map = new HashMap<String, String>();
+			map.put("Message", "No Records in Table!");
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).body(map);
+		}
 		Registration[] array = new Registration[list.size()];
 		return ResponseEntity.status(200).body(list.toArray(array));
 
@@ -65,7 +73,8 @@ public class RegistrationController {
 	}
 
 	@DeleteMapping("/users/{registrationId}")
-	public ResponseEntity<?> deleteUserById(String registrationId) throws IdNotFoundException {
+	public ResponseEntity<?> deleteUserById(@PathVariable("registrationId") String registrationId)
+			throws IdNotFoundException {
 		String string = registrationService.deleteRegistrationById(registrationId);
 		if (string.equals("fail")) {
 			Map<String, String> map = new HashMap<String, String>();
