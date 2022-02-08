@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.learning.exception.AlreadyExistsException;
+import com.learning.exception.FoodTypeNotFoundException;
 import com.learning.exception.IdNotFoundException;
 
 @ControllerAdvice
@@ -28,6 +29,13 @@ public class ExceptionAdvice {
 
 	@ExceptionHandler(IdNotFoundException.class)
 	public ResponseEntity<?> idNotFoundExceptionHandler(IdNotFoundException e) {
+		HashMap<String, String> map = new HashMap<>();
+		map.put("message", e.getMessage());
+		return ResponseEntity.badRequest().body(map);
+	}
+
+	@ExceptionHandler(FoodTypeNotFoundException.class)
+	public ResponseEntity<?> foodTypeNotFoundExceptionHandler(FoodTypeNotFoundException e) {
 		HashMap<String, String> map = new HashMap<>();
 		map.put("message", e.getMessage());
 		return ResponseEntity.badRequest().body(map);

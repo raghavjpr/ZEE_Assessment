@@ -1,14 +1,11 @@
 package com.learning.controller;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,8 +16,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.learning.entity.FoodItems;
+import com.learning.exception.AlreadyExistsException;
+import com.learning.exception.FoodTypeNotFoundException;
 import com.learning.exception.IdNotFoundException;
 import com.learning.service.FoodService;
 
@@ -31,53 +29,45 @@ public class FoodItemController {
 	@Autowired
 	FoodService foodService;
 
-//adding
-	@PostMapping("/add")
-	public ResponseEntity<?> addUser(@Valid @RequestBody FoodItems foodItems) throws IdNotFoundException {
-		FoodItems result = foodService.add(foodItems);
+	@PostMapping
+	public ResponseEntity<?> addUser(@Valid @RequestBody FoodItems foodItems) throws AlreadyExistsException {
+		FoodItems result = foodService.addFoodItem(foodItems);
 		System.out.println(result);
 		return ResponseEntity.status(201).body(result);
 	}
 
-//retrieving specific record
-	@JsonCreator
-	@GetMapping("/{foodid}")
-	public ResponseEntity<?> getFoodById(@PathVariable("foodid") int id) throws IdNotFoundException {
-		FoodItems foodItems = foodService.getFoodById(id);
-		return ResponseEntity.ok(foodItems);
+	@GetMapping("/{foodId}")
+	public ResponseEntity<?> getFoodById(@PathVariable("foodId") int foodId) throws IdNotFoundException {
+		FoodItems foodItems = foodService.getFoodItemById(foodId);
+		return ResponseEntity.status(200).body(foodItems);
 	}
 
-//retrieving all records
-	@GetMapping("/all")
-	public ResponseEntity<?> getAllFoods() throws IdNotFoundException {
-
-		Optional<java.util.List<FoodItems>> optional = foodService.getAllFoodDetails();
-
-		if (optional.isEmpty()) {
-			Map<String, String> map = new HashMap<>();
-			map.put("message", "no food found");
-			return ResponseEntity.status(HttpStatus.NO_CONTENT).body(map);
-
-		}
-		return ResponseEntity.ok(optional.get());
+	@PutMapping("/update/food")
+	public ResponseEntity<?> updateFoodItemById(@RequestBody FoodItems foodItems) throws IdNotFoundException {
+		FoodItems result = foodService.updateFoodItem(foodItems);
+		return ResponseEntity.status(200).body(result);
 	}
 
-//delete food by id
-	@DeleteMapping("/delete/{foodid}")
-	public ResponseEntity<?> deleteUserById(@PathVariable("id") int id) throws IdNotFoundException, SQLException {
-		String result = foodService.deleteFoodById(id);
-		Map<String, String> map = new HashMap<>();
-		map.put("message", "User deleted successfully");
-		return ResponseEntity.status(201).body(result);
+	@GetMapping("/foods")
+	public ResponseEntity<?> getAllFoodItems() {
 
+		FoodItems[] foodItems = foodService.getAllFoodItems();
+		return ResponseEntity.status(200).body(foodItems);
 	}
 
-//update food by id
-	@PutMapping("/update/{foodid}")
-	public ResponseEntity<?> update(@PathVariable("foodid") int foodid, @RequestBody FoodItems foodItems)
-			throws IdNotFoundException {
-		FoodItems result = foodService.update(foodid, foodItems);
-		return ResponseEntity.status(201).body(result);
+	@GetMapping("/foodType/{foodType}")
+	public ResponseEntity<?> getFoodByFoodType(@PathVariable("foodType") String foodType)
+			throws FoodTypeNotFoundException {
+		FoodItems[] foodItems = foodService.getAllFoodsByFoodType(foodType);
+		return ResponseEntity.status(200).body(foodItems);
+	}
+
+	@DeleteMapping("/delete/{foodId}")
+	public ResponseEntity<?> deleteUserById(@PathVariable("foodId") int foodId) throws IdNotFoundException {
+		String result = foodService.deleteFoodItemById(foodId);
+		Map<String, String> map = new HashMap<String, String>();
+		map.put("message", result);
+		return ResponseEntity.status(200).body(map);
 	}
 
 }
