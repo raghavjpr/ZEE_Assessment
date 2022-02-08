@@ -9,19 +9,25 @@ import com.learning.service.LoginService;
 
 @Service
 public class LoginServiceImpl implements LoginService {
-	
+
 	@Autowired
-	LoginRepo loginRepo;
+	private LoginRepo loginRepo;
 
 	@Override
 	public String addLogin(Login login) {
 		Login login2 = loginRepo.save(login);
-		if(login2 != null) {
+		if (login2 != null) {
 			return "success";
-		}else {
+		} else {
 			return "fail";
 		}
 	}
-	
 
+	@Override
+	public String authenticate(Login login) {
+		if (loginRepo.existsByEmail(login.getEmail())) {
+			return "success";
+		}
+		return "fail";
+	}
 }

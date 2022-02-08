@@ -15,35 +15,34 @@ import com.learning.repo.RegistrationRepo;
 import com.learning.service.LoginService;
 import com.learning.service.RegistrationService;
 
-@Service
+@Service // using this we get the singleton object
 public class RegistrationServiceImpl implements RegistrationService {
 
 	@Autowired
-	RegistrationRepo registrationRepo;
-
+	private RegistrationRepo registrationRepo;
 	@Autowired
-	LoginRepo loginRepo;
-
+	private LoginRepo loginRepo;
 	@Autowired
-	LoginService loginService;
+	private LoginService loginService;
 
 	@Override
+	@org.springframework.transaction.annotation.Transactional(rollbackFor = AlreadyExistsException.class)
 	public Registration addRegistration(Registration registration) throws AlreadyExistsException {
-		Optional<Registration> optional = registrationRepo.findById(registration.getRegistrationId());
-		if (optional.isPresent()) {
-			throw new AlreadyExistsException(
-					"Record With " + registration.getRegistrationId() + " id Present in Registration Table!");
+
+		boolean status = registrationRepo.existsByEmail(registration.getEmail());
+		if (status) {
+			throw new AlreadyExistsException("EMAIL ALREADY EXISTS!");
 		}
+
 		Registration registration2 = registrationRepo.save(registration);
 		if (registration2 != null) {
-			Login login = new Login(registration.getEmail(), registration.getPassword(), registration);
+			Login login = new Login(registration.getEmail(), registration.getPassword(), registration2);
 			if (loginRepo.existsByEmail(registration.getEmail())) {
-				throw new AlreadyExistsException(
-						"Record With " + registration.getEmail() + " email Present in Login Table!");
+				throw new AlreadyExistsException("USER ALREADY EXISTS IN LOGIN");
 			}
 			String result = loginService.addLogin(login);
-			if (result.equals("success")) {
-				return registration;
+			if (result == "success") {
+				return registration2;
 			} else {
 				return null;
 			}
@@ -53,31 +52,42 @@ public class RegistrationServiceImpl implements RegistrationService {
 	}
 
 	@Override
-	public List<Registration> getAllRegistrations() {
-		return registrationRepo.findAll();
-	}
+	public Registration updateRegistration(Registration registration)
+			throws IdNotFoundException, AlreadyExistsException {
 
-	@Override
-	public Optional<Registration> getRegistrationById(String string) {
-		return registrationRepo.findById(string);
-	}
-
-	@Override
-	public Registration updateRegistrationByEmail(String email, Registration registration) throws IdNotFoundException{
-		if(!registrationRepo.existsByEmail(email)) {
-			throw new IdNotFoundException("No user with " + registration.getRegistrationId() + " found.");
+		if (!registrationRepo.existsById(registration.getRegistrationId())) {
+			throw new IdNotFoundException("Sorry user with " + registration.getRegistrationId() + " not found");
 		}
 		return registrationRepo.save(registration);
-		}
+	}
 
 	@Override
-	public String deleteRegistrationById(String string) throws IdNotFoundException {
-		Optional<Registration> optional = registrationRepo.findById(string);
+	public Registration getRegistrationById(int registrationId) throws IdNotFoundException {
+		Optional<Registration> optional = registrationRepo.findById(registrationId);
 		if (optional.isEmpty()) {
-			throw new IdNotFoundException("No record with id " + string + " found");
+			throw new IdNotFoundException("sorry " + registrationId + " not found");
 		} else {
-			registrationRepo.deleteById(string);
-			return "success";
+			return optional.get();
 		}
+	}
+
+	@Override
+	public Registration[] getAllRegistrations() {
+		List<Registration> list = registrationRepo.findAll();
+		if (list.isEmpty()) {
+			return null;
+		}
+		Registration[] array = new Registration[list.size()];
+		return list.toArray(array);
+	}
+
+	@Override
+	public String deleteRegistrationById(int registrationId) throws IdNotFoundException {
+
+		if (!registrationRepo.existsById(registrationId)) {
+			throw new IdNotFoundException("sorry user with id " + registrationId + " not found");
+		}
+		registrationRepo.deleteById(registrationId);
+		return "User Successfully deleted";
 	}
 }
