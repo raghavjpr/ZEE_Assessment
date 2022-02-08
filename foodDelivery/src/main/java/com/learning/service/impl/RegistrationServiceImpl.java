@@ -1,5 +1,6 @@
 package com.learning.service.impl;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.learning.entity.Login;
 import com.learning.entity.Registration;
 import com.learning.exception.AlreadyExistsException;
+import com.learning.exception.IdNotFoundException;
 import com.learning.repo.LoginRepo;
 import com.learning.repo.RegistrationRepo;
 import com.learning.service.LoginService;
@@ -28,7 +30,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 	@Override
 	public Registration addRegistration(Registration registration) throws AlreadyExistsException {
 		Optional<Registration> optional = registrationRepo.findById(registration.getRegistrationId());
-		if (optional.isEmpty()) {
+		if (optional.isPresent()) {
 			throw new AlreadyExistsException(
 					"Record With " + registration.getRegistrationId() + " id Present in Registration Table!");
 		}
@@ -51,27 +53,31 @@ public class RegistrationServiceImpl implements RegistrationService {
 	}
 
 	@Override
-	public String getAllRegistrations() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<Registration> getAllRegistrations() {
+		return registrationRepo.findAll();
 	}
 
 	@Override
-	public String getRegistrationById(Integer integer) {
-		// TODO Auto-generated method stub
-		return null;
+	public Optional<Registration> getRegistrationById(String string) {
+		return registrationRepo.findById(string);
 	}
 
 	@Override
-	public String updateRegistrationByEmail(String email, Registration registration) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	public Registration updateRegistrationByEmail(String email, Registration registration) throws IdNotFoundException{
+		if(!registrationRepo.existsByEmail(email)) {
+			throw new IdNotFoundException("No user with " + registration.getRegistrationId() + " found.");
+		}
+		return registrationRepo.save(registration);
+		}
 
 	@Override
-	public String deleteRegistrationById(Integer integer) {
-		// TODO Auto-generated method stub
-		return null;
+	public String deleteRegistrationById(String string) throws IdNotFoundException {
+		Optional<Registration> optional = registrationRepo.findById(string);
+		if (optional.isEmpty()) {
+			throw new IdNotFoundException("No record with id " + string + " found");
+		} else {
+			registrationRepo.deleteById(string);
+			return "success";
+		}
 	}
-
 }

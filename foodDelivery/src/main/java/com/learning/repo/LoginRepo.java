@@ -9,5 +9,7 @@ import com.learning.entity.Login;
 public interface LoginRepo extends JpaRepository<Login, String> {
 	
 	boolean existsByEmail(String email);
+	
+	boolean existsByEmailAndPassword(String email, String password);
 
 }

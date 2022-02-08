@@ -7,5 +7,7 @@ import com.learning.entity.Registration;
 
 @Repository
 public interface RegistrationRepo extends JpaRepository<Registration, String> {
+	
+	boolean existsByEmail(String email);
 
 }

@@ -1,18 +1,22 @@
 package com.learning.service;
 
+import java.util.List;
+import java.util.Optional;
+
 import com.learning.entity.Registration;
 import com.learning.exception.AlreadyExistsException;
+import com.learning.exception.IdNotFoundException;
 
 public interface RegistrationService {
 
 	public Registration addRegistration(Registration registration) throws AlreadyExistsException;
 
-	public String getAllRegistrations();
+	public List<Registration> getAllRegistrations();
 
-	public String getRegistrationById(Integer integer);
+	public Optional<Registration> getRegistrationById(String string);
 
-	public String updateRegistrationByEmail(String email, Registration registration);
+	public Registration updateRegistrationByEmail(String email, Registration registration) throws IdNotFoundException, AlreadyExistsException;
 
-	public String deleteRegistrationById(Integer integer);
+	public String deleteRegistrationById(String string) throws IdNotFoundException;
 
 }
