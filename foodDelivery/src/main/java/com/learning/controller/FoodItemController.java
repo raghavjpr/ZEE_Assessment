@@ -7,6 +7,7 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,32 +24,36 @@ import com.learning.exception.IdNotFoundException;
 import com.learning.service.FoodService;
 
 @RestController
-@RequestMapping("/food")
+@RequestMapping("/api/food")
 public class FoodItemController {
 
 	@Autowired
 	FoodService foodService;
 
 	@PostMapping
-	public ResponseEntity<?> addUser(@Valid @RequestBody FoodItems foodItems) throws AlreadyExistsException {
+	@PreAuthorize("hasRole('ADMIN') ")
+	public ResponseEntity<?> addFoodItem(@Valid @RequestBody FoodItems foodItems) throws AlreadyExistsException {
 		FoodItems result = foodService.addFoodItem(foodItems);
 		System.out.println(result);
 		return ResponseEntity.status(201).body(result);
 	}
 
 	@GetMapping("/{foodId}")
-	public ResponseEntity<?> getFoodById(@PathVariable("foodId") int foodId) throws IdNotFoundException {
+	@PreAuthorize("hasRole('ADMIN') or hasRole('USER') ")
+	public ResponseEntity<?> getFoodItemById(@PathVariable("foodId") int foodId) throws IdNotFoundException {
 		FoodItems foodItems = foodService.getFoodItemById(foodId);
 		return ResponseEntity.status(200).body(foodItems);
 	}
 
 	@PutMapping("/update/food")
+	@PreAuthorize("hasRole('ADMIN') ")
 	public ResponseEntity<?> updateFoodItemById(@RequestBody FoodItems foodItems) throws IdNotFoundException {
 		FoodItems result = foodService.updateFoodItem(foodItems);
 		return ResponseEntity.status(200).body(result);
 	}
 
 	@GetMapping("/foods")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('USER') ")
 	public ResponseEntity<?> getAllFoodItems() {
 
 		FoodItems[] foodItems = foodService.getAllFoodItems();
@@ -56,6 +61,7 @@ public class FoodItemController {
 	}
 
 	@GetMapping("/foodType/{foodType}")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('USER') ")
 	public ResponseEntity<?> getFoodByFoodType(@PathVariable("foodType") String foodType)
 			throws FoodTypeNotFoundException {
 		FoodItems[] foodItems = foodService.getAllFoodsByFoodType(foodType);
@@ -63,6 +69,7 @@ public class FoodItemController {
 	}
 
 	@DeleteMapping("/delete/{foodId}")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> deleteUserById(@PathVariable("foodId") int foodId) throws IdNotFoundException {
 		String result = foodService.deleteFoodItemById(foodId);
 		Map<String, String> map = new HashMap<String, String>();
