@@ -10,7 +10,7 @@ public interface UserService {
 
 	User[] getAllUsers();
 
-	User getUserById(long userId) throws IdNotFoundException;
+	User getUserByUsername(String username) throws IdNotFoundException;
 
 	User updateUser(User user) throws IdNotFoundException, AlreadyExistsException;
 

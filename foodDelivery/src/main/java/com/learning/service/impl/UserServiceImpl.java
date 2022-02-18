@@ -35,10 +35,10 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User getUserById(long userId) throws IdNotFoundException {
-		Optional<User> optional = userRepo.findById(userId);
+	public User getUserByUsername(String username) throws IdNotFoundException {
+		Optional<User> optional = userRepo.findByUsername(username);
 		if (optional.isEmpty()) {
-			throw new IdNotFoundException("sorry " + userId + " not found");
+			throw new IdNotFoundException("sorry " + username + " not found");
 		} else {
 			return optional.get();
 		}
@@ -56,11 +56,12 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public String deleteUserByUsername(String username) throws IdNotFoundException {
-
-		if (!userRepo.existsByUsername(username)) {
-			throw new IdNotFoundException("sorry user with username " + username + " not found");
+		Optional<User> optional = userRepo.findByUsername(username);
+		if (optional.isPresent()) {
+			userRepo.deleteById(optional.get().getUserId());
+			return "User Successfully deleted";
 		}
-		userRepo.deleteByUsername(username);
-		return "User Successfully deleted";
+		return "Not deleted";
 	}
+
 }

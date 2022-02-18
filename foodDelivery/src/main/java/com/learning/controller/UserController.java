@@ -27,31 +27,6 @@ public class UserController {
 	@Autowired
 	UserService userService;
 
-//	@PostMapping("/register")
-//	@PreAuthorize("hasRole('USER') or hasRole('USER')")
-//	public ResponseEntity<?> addUser(@Valid @RequestBody User user) throws AlreadyExistsException {
-//
-//		User result = userService.addUser(user);
-//		System.out.println(result);
-//		return ResponseEntity.status(201).body(result);
-//
-//	}
-//
-//	@PostMapping("/authenticate")
-//	public ResponseEntity<?> authenticate(@RequestBody Login login) {
-//		String result = loginService.authenticate(login);
-//		if (result.equals("success")) {
-//			Map<String, String> map = new HashMap<String, String>();
-//			map.put("message", "Success");
-//			return ResponseEntity.status(200).body(map);
-//		} else {
-//			Map<String, String> map = new HashMap<String, String>();
-//			map.put("message", "Fail");
-//			return ResponseEntity.status(403).body(map);
-//		}
-//
-//	}
-
 	@GetMapping("/users")
 	@PreAuthorize("hasRole('ADMIN') ")
 	public ResponseEntity<?> getAllUsers() {
@@ -64,10 +39,10 @@ public class UserController {
 		return ResponseEntity.status(200).body(users);
 	}
 
-	@GetMapping("/users/{userId}")
+	@GetMapping("/users/{username}")
 	@PreAuthorize("hasRole('ADMIN') ")
-	public ResponseEntity<?> getUserById(@PathVariable("userId") long userId) throws IdNotFoundException {
-		User user = userService.getUserById(userId);
+	public ResponseEntity<?> getUserByUsername(@PathVariable("username") String username) throws IdNotFoundException {
+		User user = userService.getUserByUsername(username);
 		return ResponseEntity.status(200).body(user);
 	}
 
@@ -82,6 +57,7 @@ public class UserController {
 	@PreAuthorize("hasRole('ADMIN') or hasRole('USER') ")
 	public ResponseEntity<?> deleteUserById(@PathVariable("username") String username) throws IdNotFoundException {
 		String result = userService.deleteUserByUsername(username);
+		System.out.println(result);
 		Map<String, String> map = new HashMap<String, String>();
 		map.put("message", result);
 		return ResponseEntity.status(201).body(map);
