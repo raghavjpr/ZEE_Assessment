@@ -2,32 +2,26 @@ package com.learning.payload.response;
 
 import java.util.List;
 
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
-@Data
 public class JwtResponse {
 
-	@Setter(value = AccessLevel.NONE)
-	@Getter(value = AccessLevel.NONE)
-	private String token; // It is an encrypted string which will help us to access the secured end point
-							// from the server.
-	@Setter(value = AccessLevel.NONE)
-	@Getter(value = AccessLevel.NONE)
+	private String token;
 	private String type = "Bearer";
 	private Long id;
-	private String username;
 	private String email;
-	@Setter(value = AccessLevel.NONE)
 	private List<String> roles;
 
-	public String getAccessToken() {
+	public JwtResponse(String token, Long id, String email, List<String> roles) {
+		this.token = token;
+		this.id = id;
+		this.email = email;
+		this.roles = roles;
+	}
+
+	public String getToken() {
 		return token;
 	}
 
-	public void setAccessToken(String token) {
+	public void setToken(String token) {
 		this.token = token;
 	}
 
@@ -35,16 +29,28 @@ public class JwtResponse {
 		return type;
 	}
 
-	public void setTokenType(String type) {
-		this.type = type;
+	public void setTokenType(String tokenType) {
+		this.type = tokenType;
 	}
 
-	public JwtResponse(String token, Long id, String username, String email, List<String> roles) {
-		this.token = token;
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
 		this.id = id;
-		this.username = username;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
 		this.email = email;
-		this.roles = roles;
+	}
+
+	public List<String> getRoles() {
+		return roles;
 	}
 
 }

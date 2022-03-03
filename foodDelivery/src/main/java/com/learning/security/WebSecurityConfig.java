@@ -19,46 +19,57 @@ import com.learning.security.jwt.AuthTokenFilter;
 import com.learning.security.services.UserDetailsServiceImpl;
 
 @Configuration
-//it will have security related configurations
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-
+	
 	@Autowired
 	UserDetailsServiceImpl userDetailsService;
-
 	@Autowired
-	AuthEntryPointJwt unauthorizedHandler;
-
+	private AuthEntryPointJwt unauthorizedHandeler;
+	
 	@Bean
 	public AuthTokenFilter authenticationJwtTokenFilter() {
 		return new AuthTokenFilter();
 	}
-
+	
 	@Override
 	protected void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
+		// TODO Auto-generated method stub
 		authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
 	}
-
+	
 	@Bean
 	@Override
 	public AuthenticationManager authenticationManagerBean() throws Exception {
+		// TODO Auto-generated method stub
 		return super.authenticationManagerBean();
 	}
-
+	
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-
+	
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.cors().and().csrf().disable().exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
-				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-				.authorizeHttpRequests().antMatchers("/api/auth/**").permitAll().antMatchers("/api/test/**").permitAll()
-				.anyRequest().authenticated();
-
+		// TODO Auto-generated method stub
+		http.cors().and()
+		.csrf()
+		.disable()
+		.exceptionHandling()
+		.authenticationEntryPoint(unauthorizedHandeler)
+		.and()
+		.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+		.and()
+		.authorizeHttpRequests().antMatchers("/api/auth/**").permitAll()
+		.antMatchers("/api/food/**").permitAll()
+		.antMatchers("/api/cart/**").permitAll()
+		.antMatchers("/api/users/**")
+		.permitAll().anyRequest().authenticated();
+		
 		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+//		super.configure(http);
 	}
 
 }

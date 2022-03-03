@@ -1,46 +1,52 @@
 package com.learning.controlleradvice;
 
-import java.util.HashMap;
+import javax.validation.ConstraintViolationException;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.learning.exception.AlreadyExistsException;
-import com.learning.exception.FoodTypeNotFoundException;
 import com.learning.exception.IdNotFoundException;
+import com.learning.exception.apierror.ApiError;
+import com.learning.payload.response.MessageResponse;
 
-@ControllerAdvice
-public class ExceptionAdvice extends ResponseEntityExceptionHandler{
-
+@RestControllerAdvice
+public class ExceptionAdvice extends ResponseEntityExceptionHandler {
+	
 	@ExceptionHandler(AlreadyExistsException.class)
-	public ResponseEntity<?> RecordAlreadyExistsExceptionHandler(AlreadyExistsException e) {
-		HashMap<String, String> map = new HashMap<>();
-		map.put("message", e.getMessage());
-		return ResponseEntity.badRequest().body(map);
+	public ResponseEntity<?> alreadyExistsExceptionHandler(AlreadyExistsException e) {
+		return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
 	}
-
-//	@ExceptionHandler(Exception.class)
-//	public ResponseEntity<?> ExceptionHandler(Exception e) {
-//		HashMap<String, String> map = new HashMap<>();
-//		map.put("message", "unknown exception" + e.getMessage());
-//		return ResponseEntity.badRequest().body(map);
-//	}
-
+	
 	@ExceptionHandler(IdNotFoundException.class)
 	public ResponseEntity<?> idNotFoundExceptionHandler(IdNotFoundException e) {
-		HashMap<String, String> map = new HashMap<>();
-		map.put("message", e.getMessage());
-		return ResponseEntity.badRequest().body(map);
+		return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
 	}
-
-	@ExceptionHandler(FoodTypeNotFoundException.class)
-	public ResponseEntity<?> foodTypeNotFoundExceptionHandler(FoodTypeNotFoundException e) {
-		HashMap<String, String> map = new HashMap<>();
-		map.put("message", e.getMessage());
-		return ResponseEntity.badRequest().body(map);
-
+	
+	@Override
+	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+			HttpHeaders headers, HttpStatus status, WebRequest request) {
+		// TODO Auto-generated method stub
+		ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
+		apiError.setMessage("Validation Error");
+		apiError.addValidationErrors(ex.getBindingResult().getFieldErrors());
+		apiError.addValidationError(ex.getBindingResult().getGlobalErrors());
+		return buildResponseEntity(apiError);
+	}
+	
+	private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
+		return new ResponseEntity<>(apiError, apiError.getHttpStatus());
+	}
+	
+	@ExceptionHandler(ConstraintViolationException.class)
+	protected ResponseEntity<?> handleConstraintViolation() {
+		return null;
 	}
 
 }

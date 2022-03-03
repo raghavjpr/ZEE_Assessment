@@ -7,14 +7,18 @@ spring:
   jpa:
     properties:
       hibernate:
-        dialect:  org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQL8Dialect
     show-sql: true
     hibernate:
+      naming:
+        physical-strategy: com.learning.utils.CustomNamingStrategy
       ddl-auto: update
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
 server:
   port: 9005
-fooddelivery:
+learning:
   app:
-    jwtSecret: secretkey
+    jwtSecret: secretKey
     jwtExpirationMs: 86400000
-

@@ -13,16 +13,16 @@ import com.learning.repo.UserRepo;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
-
+	
 	@Autowired
-	UserRepo userRepo;
-
+	private UserRepo userRepo;
+	
 	@Transactional
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		// TODO Auto-generated method stub
-		User user = userRepo.findByUsername(username)
-				.orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+		User user = userRepo.findByEmail(username)
+				.orElseThrow(()-> new UsernameNotFoundException("user not found with username " + username));
 		return UserDetailsImpl.build(user);
 	}
 

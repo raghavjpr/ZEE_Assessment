@@ -1,6 +1,8 @@
 package com.learning.controller;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,14 +15,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.learning.entity.EROLE;
 import com.learning.entity.Role;
 import com.learning.entity.User;
-import com.learning.entity.enums.EROLE;
 import com.learning.payload.request.LoginRequest;
 import com.learning.payload.request.SignupRequest;
 import com.learning.payload.response.JwtResponse;
@@ -29,62 +33,56 @@ import com.learning.repo.RoleRepo;
 import com.learning.repo.UserRepo;
 import com.learning.security.jwt.JwtUtils;
 import com.learning.security.services.UserDetailsImpl;
-import com.learning.service.UserService;
 
+@CrossOrigin("*")
 @RestController
 @RequestMapping("/api/auth")
-public class SignUpSignInController {
+public class AuthController {
+	
 	@Autowired
-	UserService userService;
-
+	private UserRepo userRepo;
 	@Autowired
-	UserRepo userRepo;
-
+	private RoleRepo roleRepo;
 	@Autowired
-	RoleRepo roleRepo;
-
+	private PasswordEncoder passwordEncoder;
 	@Autowired
-	PasswordEncoder passwordEncoder;
-
+	private JwtUtils jwtUtils;
 	@Autowired
-	JwtUtils jwtUtils;
-
-	@Autowired
-	AuthenticationManager authenticationManager;
-
-	@PostMapping("/signup")
+	private AuthenticationManager authenticationManager;
+	
+//	POST request for adding user
+	@PostMapping("/register")
 	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signupRequest) {
-		if (userRepo.existsByUsername(signupRequest.getUsername())) {
-			return ResponseEntity.badRequest().body(new MessageResponse("Error: Usernaem is already taken!"));
-		}
-
 		if (userRepo.existsByEmail(signupRequest.getEmail())) {
-			return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
+			return ResponseEntity
+					.badRequest()
+					.body(new MessageResponse("Error: Email is already in use!"));
 		}
-
-		User user = new User(signupRequest.getUsername(), signupRequest.getName(), signupRequest.getEmail(),
-				passwordEncoder.encode(signupRequest.getPassword()));
-
-		Set<String> strRoles = signupRequest.getRole();
-
-		Set<Role> roles = new HashSet<Role>();
-
-		if (strRoles == null) {
-			Role roleUser = roleRepo.findByRoleName(EROLE.ROLE_USER)
-					.orElseThrow(() -> new RuntimeException("Error: Role not found!"));
-			roles.add(roleUser);
-		} else {
-			strRoles.forEach(e -> {
+		
+		User user = new User(signupRequest.getEmail(),
+				signupRequest.getName(),
+				passwordEncoder.encode(signupRequest.getPassword()),
+				signupRequest.getAddress());
+		
+		Set<String> strRoles = signupRequest.getRoles();
+		Set<Role> roles = new HashSet<>();
+		if (strRoles==null) {
+			Role userRole = roleRepo.findByRoleName(EROLE.ROLE_USER)
+					.orElseThrow(()-> new RuntimeException("Error: role not found"));
+			roles.add(userRole);
+		}
+		else {
+			strRoles.forEach(e->{
 				switch (e) {
 				case "admin":
 					Role roleAdmin = roleRepo.findByRoleName(EROLE.ROLE_ADMIN)
-							.orElseThrow(() -> new RuntimeException("Error: Role not found!"));
+							.orElseThrow(()-> new RuntimeException("Error: role not found"));
 					roles.add(roleAdmin);
 					break;
-
-				case "user":
+				
+				default:
 					Role roleUser = roleRepo.findByRoleName(EROLE.ROLE_USER)
-							.orElseThrow(() -> new RuntimeException("Error: Role not found!"));
+							.orElseThrow(()-> new RuntimeException("Error: role not found"));
 					roles.add(roleUser);
 					break;
 				}
@@ -92,22 +90,40 @@ public class SignUpSignInController {
 		}
 		user.setRoles(roles);
 		userRepo.save(user);
-		return ResponseEntity.status(201).body(new MessageResponse("User Created Successfully!"));
+		
+		return ResponseEntity
+				.status(201)
+				.body(new MessageResponse("User created successfully"));
 	}
-
-	@PostMapping("/signin")
+	
+//	POST request for validating user
+	@PostMapping("/authenticate")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-		Authentication authentication = authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-
+		Authentication authentication = authenticationManager
+				.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
+						loginRequest.getPassword()));
+		
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		String jwt = jwtUtils.generateToken(authentication);
 		UserDetailsImpl userDetailsImpl = (UserDetailsImpl) authentication.getPrincipal();
-		java.util.List<String> roles = userDetailsImpl.getAuthorities().stream().map(i -> i.getAuthority())
+		List<String> roles = userDetailsImpl.getAuthorities()
+				.stream()
+				.map(i->i.getAuthority())
 				.collect(Collectors.toList());
-
-		return ResponseEntity.ok(new JwtResponse(jwt, userDetailsImpl.getId(), userDetailsImpl.getUsername(),
-				userDetailsImpl.getEmail(), roles));
+		
+		return ResponseEntity.ok(new JwtResponse(jwt,
+				userDetailsImpl.getId(),
+				userDetailsImpl.getEmail(),
+				roles));
+	}
+	
+	@GetMapping("/")
+	public ResponseEntity<?> getUser() {
+		UserDetailsImpl userDetailsImpl = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication()
+				.getPrincipal();
+		Long id = userDetailsImpl.getId();
+		Optional<User> optional = userRepo.findById(id);
+		return ResponseEntity.ok(optional.get());
 	}
 
 }

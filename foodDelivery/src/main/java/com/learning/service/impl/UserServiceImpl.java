@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.learning.entity.User;
 import com.learning.exception.AlreadyExistsException;
@@ -12,56 +13,59 @@ import com.learning.exception.IdNotFoundException;
 import com.learning.repo.UserRepo;
 import com.learning.service.UserService;
 
-@Service // using this we get the singleton object
+@Service
 public class UserServiceImpl implements UserService {
-
+	
 	@Autowired
 	private UserRepo userRepo;
 
 	@Override
-	public User addUser(User user) {
-
-		return userRepo.save(user);
-
-	}
-
-	@Override
-	public User updateUser(User user) throws IdNotFoundException, AlreadyExistsException {
-
-		if (!userRepo.existsByUsername(user.getUsername())) {
-			throw new IdNotFoundException("Sorry user with " + user.getUsername() + " not found");
+	@Transactional(rollbackFor = AlreadyExistsException.class)
+	public User addUser(User register) throws AlreadyExistsException {
+		// TODO Auto-generated method stub
+		if(userRepo.existsByEmail(register.getEmail())) {
+			throw new AlreadyExistsException("This record already exists");
 		}
-		return userRepo.save(user);
+		return userRepo.save(register);
 	}
 
 	@Override
-	public User getUserByUsername(String username) throws IdNotFoundException {
-		Optional<User> optional = userRepo.findByUsername(username);
+	public Optional<List<User>> getAllUsers() {
+		// TODO Auto-generated method stub
+		return Optional.ofNullable(userRepo.findAll());
+	}
+
+	@Override
+	public Optional<User> getUserById(Long id) throws IdNotFoundException {
+		// TODO Auto-generated method stub
+		Optional<User> optional = userRepo.findById(id);
 		if (optional.isEmpty()) {
-			throw new IdNotFoundException("sorry " + username + " not found");
-		} else {
-			return optional.get();
+			throw new IdNotFoundException("Sorry user with "+ id +" not found");
 		}
+		return optional;
 	}
 
 	@Override
-	public User[] getAllUsers() {
-		List<User> list = userRepo.findAll();
-		if (list.isEmpty()) {
-			return null;
+	public User updateUser(User user, Long id) throws IdNotFoundException {
+		// TODO Auto-generated method stub
+		if (userRepo.findById(id).isEmpty()) {
+			throw new IdNotFoundException("Sorry user with "+ id +" not found");
 		}
-		User[] array = new User[list.size()];
-		return list.toArray(array);
+		user.setId(id);
+		return userRepo.save(user);
 	}
 
 	@Override
-	public String deleteUserByUsername(String username) throws IdNotFoundException {
-		Optional<User> optional = userRepo.findByUsername(username);
-		if (optional.isPresent()) {
-			userRepo.deleteById(optional.get().getUserId());
-			return "User Successfully deleted";
+	@Transactional(rollbackFor = IdNotFoundException.class)
+	public String deleteUser(Long id) throws IdNotFoundException {
+		// TODO Auto-generated method stub
+		Optional<User> optional = this.getUserById(id);
+		if (optional.isEmpty())
+			throw new IdNotFoundException("Sorry user with "+ id +" not found");
+		else {
+			userRepo.deleteById(id);
+			return "Success";
 		}
-		return "Not deleted";
 	}
 
 }

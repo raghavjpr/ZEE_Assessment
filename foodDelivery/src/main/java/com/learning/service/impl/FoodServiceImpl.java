@@ -1,85 +1,81 @@
 package com.learning.service.impl;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.learning.entity.FoodItems;
+import com.learning.entity.Food;
+import com.learning.entity.TYPE;
 import com.learning.exception.AlreadyExistsException;
-import com.learning.exception.FoodTypeNotFoundException;
 import com.learning.exception.IdNotFoundException;
-import com.learning.repo.FoodItemsRepo;
+import com.learning.repo.FoodRepo;
 import com.learning.service.FoodService;
+import com.learning.utils.FileUtils;
 
 @Service
 public class FoodServiceImpl implements FoodService {
-
+	
 	@Autowired
-	private FoodItemsRepo foodItemsRepo;
-
+	private FoodRepo foodRepo;
+	@Autowired
+	private FileUtils fileUtils;
+	
 	@Override
-	public FoodItems addFoodItem(FoodItems foodItems) throws AlreadyExistsException {
-		boolean status = foodItemsRepo.existsByFoodId(foodItems.getFoodId());
-		if (status) {
-			throw new AlreadyExistsException("Food Item Already Exist!");
+	public Food addFood(Food food) throws AlreadyExistsException {
+		// TODO Auto-generated method stub
+		if(foodRepo.existsById(food.getId())) {
+			throw new AlreadyExistsException("This record already exists");
 		}
-		FoodItems food2 = foodItemsRepo.save(foodItems);
-		return food2;
+
+		return foodRepo.save(food);
 	}
 
 	@Override
-	public FoodItems updateFoodItem(FoodItems foodItems) throws IdNotFoundException {
-		if (!foodItemsRepo.existsById(foodItems.getFoodId())) {
-			throw new IdNotFoundException("Sorry Food Not Found");
-		}
-		return foodItemsRepo.save(foodItems);
+	public Optional<List<Food>> getAllFoods() {
+		// TODO Auto-generated method stub
+		return Optional.ofNullable(foodRepo.findAll());
 	}
 
 	@Override
-	public FoodItems getFoodItemById(int foodId) throws IdNotFoundException {
-		Optional<FoodItems> optional = foodItemsRepo.findById(foodId);
+	public Optional<Food> getFoodById(int id) throws IdNotFoundException {
+		// TODO Auto-generated method stub
+		Optional<Food> optional = foodRepo.findById(id);
 		if (optional.isEmpty()) {
 			throw new IdNotFoundException("Sorry Food Not Found");
-		} else {
-			return optional.get();
+		}
+		return optional;
+	}
+
+	@Override
+	public Food updateFood(Food food, int id) throws IdNotFoundException {
+		// TODO Auto-generated method stub
+		if (foodRepo.findById(id).isEmpty()) {
+			throw new IdNotFoundException("Sorry Food Not Found");
+		}
+		food.setId(id);
+		return foodRepo.save(food);
+	}
+
+	@Override
+	public String deleteFood(int id) throws IdNotFoundException {
+		// TODO Auto-generated method stub
+		Optional<Food> optional = foodRepo.findById(id);
+		if (optional.isEmpty())
+			throw new IdNotFoundException("Sorry Food Not Found");
+		else {
+			foodRepo.deleteById(id);
+			return "Success";
 		}
 	}
 
 	@Override
-	public FoodItems[] getAllFoodItems() {
-		List<FoodItems> list = foodItemsRepo.findAll();
-		FoodItems[] array = new FoodItems[list.size()];
-		return list.toArray(array);
+	public Optional<List<Food>> getByFoodType(TYPE foodType) {
+		// TODO Auto-generated method stub
+		return Optional.ofNullable(foodRepo.findAllByFoodType(foodType));
 	}
 
-	@SuppressWarnings("null")
-	@Override
-	public FoodItems[] getAllFoodsByFoodType(String foodType) throws FoodTypeNotFoundException {
-		List<FoodItems> foodItems = foodItemsRepo.findAll();
-		List<FoodItems> temp = new ArrayList<FoodItems>();
-		for (FoodItems foodItems2 : foodItems) {
-			if (foodItems2.getFoodType().toString().equals(foodType)) {
-				temp.add(foodItems2);
-			}
-		}
-		if (temp.isEmpty()) {
-			throw new FoodTypeNotFoundException("Sorry Food Type Not Found");
-		}
-		FoodItems[] array = new FoodItems[temp.size()];
-		return temp.toArray(array);
-	}
-
-	@Override
-	public String deleteFoodItemById(int foodId) throws IdNotFoundException {
-
-		if (!foodItemsRepo.existsById(foodId)) {
-			throw new IdNotFoundException("sorry user with id " + foodId + " not found");
-		}
-		foodItemsRepo.deleteById(foodId);
-		return "Food Successfully deleted";
-
-	}
 }

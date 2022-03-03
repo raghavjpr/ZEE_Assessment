@@ -1,8 +1,11 @@
 package com.learning.entity;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -15,51 +18,57 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Setter
+@Getter
+@EqualsAndHashCode
+@ToString
 @NoArgsConstructor
+//@AllArgsConstructor
 @Entity
-@Table(uniqueConstraints = { @UniqueConstraint(columnNames = "username"), @UniqueConstraint(columnNames = "email") })
+@Table(name = "user", uniqueConstraints = {@UniqueConstraint(columnNames = "email")})
 public class User {
 
+	public User(String email, String name, String password, String address) {
+		this.email = email;
+		this.name = name;
+		this.password = password;
+		this.address = address;
+	}
+
 	@Id
+	@Column(name = "userId")
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long userId;
-
-	@NotBlank
-	@Size(max = 20)
-	private String username;
-
-	@Size(max = 50)
-	@NotNull
-	private String name;
-
+	private Long id;
+	
 	@Size(max = 50)
 	@Email
 	private String email;
-
+	@Size(max = 50)
+	@NotBlank
+	private String name;
 	@Size(max = 100)
-	@NotNull
+	@NotBlank
 	private String password;
-
+	@Size(max = 50)
+	@NotBlank
 	private String address;
-
+	
 	@ManyToMany(fetch = FetchType.LAZY)
-	@JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "userId"), inverseJoinColumns = @JoinColumn(name = "roleId"))
+	@JoinTable(name = "cart", joinColumns = @JoinColumn(name = "userId"),
+	inverseJoinColumns = @JoinColumn(name  = "foodId"))
+	private List<Food> cart = new ArrayList<Food>();
+	
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "userId"),
+	inverseJoinColumns = @JoinColumn(name  = "roleId"))
 	private Set<Role> roles = new HashSet<Role>();
-
-	public User(@NotBlank @Size(max = 20) String username, @Size(max = 50) @NotNull String name,
-			@Size(max = 50) @Email String email, @Size(max = 100) @NotNull String password) {
-		super();
-		this.username = username;
-		this.name = name;
-		this.email = email;
-		this.password = password;
-	}
 
 }
